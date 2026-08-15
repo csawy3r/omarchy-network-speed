@@ -4,6 +4,8 @@
 
 Shows current download and upload throughput in the top bar. Click either reading to open a popup where you can pick which interface to measure (a specific NIC, or all interfaces combined), the icon and shared speed-tier colors, a minimum-speed threshold, and a fixed column width so the bar doesn't reflow as the numbers change.
 
+![Network Speed popup](preview.png)
+
 ## Installation
 
 ```bash
