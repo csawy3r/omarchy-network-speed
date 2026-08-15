@@ -40,6 +40,7 @@ omarchy restart shell
 | **Speed-tier colors** | One shared palette (B/s, KB/s, MB/s) colors the arrow, number, and unit by how fast the current rate is. |
 | **Minimum threshold** | Below a configurable speed, show `- B/s` instead of a noisy near-zero number. |
 | **Fixed column width** | Optional constant width so neighboring bar widgets don't shift as digit count changes. |
+| **Top apps** | Popup lists up to 5 of your own processes by current network activity (via `ss -tanpi`), each with live download/upload rate. Unprivileged — only sees sockets owned by the current user. |
 
 ## Settings
 

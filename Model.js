@@ -85,6 +85,63 @@ function throughputState(previous, next, now) {
   return { prevKey: key, prevRx: rx, prevTx: tx, prevTime: now, downloadRate: downloadRate, uploadRate: uploadRate }
 }
 
+// Parses `ss -H -tanpi` output into per-process rx/tx byte totals, then
+// diffs against the previous sample to get a rate. Unprivileged: `ss -p`
+// only resolves process info for sockets the current user owns, so this
+// only ever shows the current user's own apps.
+function parseNetworkProcesses(raw, previous, now) {
+  var lines = String(raw || "").split("\n")
+  var pending = null
+  var txTotals = {}
+  var rxTotals = {}
+  var names = {}
+
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i]
+    var userMatch = line.match(/users:\(\("([^"]+)",pid=(\d+)/)
+    if (userMatch) {
+      pending = { pid: userMatch[2], name: userMatch[1] }
+      names[pending.pid] = pending.name
+    }
+    if (line.indexOf("bytes_") < 0) continue
+    var ackedMatch = line.match(/bytes_acked:(\d+)/)
+    var sentMatch = line.match(/bytes_sent:(\d+)/)
+    var receivedMatch = line.match(/bytes_received:(\d+)/)
+    if (!ackedMatch && !sentMatch && !receivedMatch) continue
+    var pid = pending ? pending.pid : null
+    if (!pid) continue
+    var txBytes = ackedMatch ? Number(ackedMatch[1]) : (sentMatch ? Number(sentMatch[1]) : 0)
+    var rxBytes = receivedMatch ? Number(receivedMatch[1]) : 0
+    txTotals[pid] = (txTotals[pid] || 0) + txBytes
+    rxTotals[pid] = (rxTotals[pid] || 0) + rxBytes
+    pending = null
+  }
+
+  var prev = previous || {}
+  var list = []
+  var nextPrev = {}
+
+  for (var pidKey in names) {
+    var tx = txTotals[pidKey] || 0
+    var rx = rxTotals[pidKey] || 0
+    var prevEntry = prev[pidKey]
+    var rxRate = 0
+    var txRate = 0
+    if (prevEntry) {
+      var seconds = Math.max(0.5, (now - prevEntry.at) / 1000)
+      rxRate = Math.max(0, (rx - prevEntry.rx) / seconds)
+      txRate = Math.max(0, (tx - prevEntry.tx) / seconds)
+    }
+    nextPrev[pidKey] = { rx: rx, tx: tx, at: now }
+    if (!prevEntry && rx + tx <= 0) continue
+    list.push({ pid: pidKey, name: names[pidKey], rxRate: rxRate, txRate: txRate })
+  }
+
+  list.sort(function(a, b) { return (b.rxRate + b.txRate) - (a.rxRate + a.txRate) })
+
+  return { list: list, previous: nextPrev }
+}
+
 function formatBytes(bytes) {
   var n = Number(bytes)
   if (!isFinite(n) || n < 0) n = 0

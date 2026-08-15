@@ -45,6 +45,8 @@ Panel {
   property var interfaceList: []
   property string resolvedLabel: "…"
   property var throughputPrev: ({})
+  property var networkProcesses: []
+  property var networkProcessPrev: ({})
 
   readonly property string downloadText: downloadRate < minThreshold ? "- B/s" : Model.formatRate(downloadRate)
   readonly property string uploadText: uploadRate < minThreshold ? "- B/s" : Model.formatRate(uploadRate)
@@ -103,14 +105,37 @@ Panel {
     root.uploadRate = state.uploadRate
   }
 
+  function refreshProcessesNow() { if (root.opened) processProc.running = true }
+
+  function handleProcessSample(raw) {
+    var now = Date.now()
+    var state = Model.parseNetworkProcesses(raw, root.networkProcessPrev, now)
+    root.networkProcessPrev = state.previous
+    root.networkProcesses = state.list
+  }
+
   onSelectedInterfaceChanged: throughputPrev = ({})
+  onOpenedChanged: if (opened) refreshProcessesNow()
 
   Timer {
     interval: root.pollIntervalMs
     running: true
     repeat: true
     triggeredOnStart: true
-    onTriggered: root.refreshNow()
+    onTriggered: {
+      root.refreshNow()
+      root.refreshProcessesNow()
+    }
+  }
+
+  Process {
+    id: processProc
+    command: ["bash", "-lc", "ss -H -tanpi 2>/dev/null"]
+    stdout: StdioCollector {
+      id: processOut
+      waitForEnd: true
+      onStreamFinished: root.handleProcessSample(text)
+    }
   }
 
   Process {
@@ -130,7 +155,7 @@ Panel {
     owner: root.barIdentity
     open: root.opened
     contentWidth: Style.space(320)
-    contentHeight: Style.space(680)
+    contentHeight: Style.space(720)
 
     ScrollView {
       id: scrollArea
@@ -175,6 +200,44 @@ Panel {
           background: Color.popups.background
           popupBorder: Color.popups.border
           onChanged: function(value) { root.setSelectedInterface(value) }
+        }
+
+        PanelSeparator { Layout.fillWidth: true; foreground: Color.popups.text }
+
+        PanelSectionHeader { text: "TOP APPS"; foreground: Color.popups.text }
+
+        Text {
+          Layout.fillWidth: true
+          visible: root.networkProcesses.length === 0
+          text: "No active connections detected yet."
+          color: Qt.darker(Color.popups.text, 1.3)
+          font.family: Style.font.family
+          font.pixelSize: Style.font.bodySmall
+        }
+
+        Repeater {
+          model: root.networkProcesses.slice(0, 5)
+          delegate: RowLayout {
+            required property var modelData
+            Layout.fillWidth: true
+            spacing: Style.spacing.sm
+
+            Text {
+              Layout.fillWidth: true
+              text: modelData.name + " (" + modelData.pid + ")"
+              color: Color.popups.text
+              font.family: Style.font.family
+              font.pixelSize: Style.font.bodySmall
+              elide: Text.ElideRight
+            }
+
+            Text {
+              text: "↓ " + Model.formatRate(modelData.rxRate) + "  ↑ " + Model.formatRate(modelData.txRate)
+              color: Qt.darker(Color.popups.text, 1.2)
+              font.family: Style.font.family
+              font.pixelSize: Style.font.bodySmall
+            }
+          }
         }
 
         PanelSeparator { Layout.fillWidth: true; foreground: Color.popups.text }
