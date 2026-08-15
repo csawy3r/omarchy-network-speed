@@ -7,7 +7,7 @@ Shows current download and upload throughput in the top bar. Click either readin
 ## Installation
 
 ```bash
-omarchy plugin add https://github.com/csawyer/omarchy-network-speed.git --enable
+omarchy plugin add https://github.com/csawy3r/omarchy-network-speed.git --enable
 ```
 
 ### Install from a local checkout
