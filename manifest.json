@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "network-speed",
+  "name": "Network Speed",
+  "version": "1.0.0",
+  "author": "csawyer",
+  "description": "Live upload/download rate with an interface, icon, and color picker",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Network Speed",
+    "description": "Live network throughput; click to pick the interface, icons, and colors",
+    "category": "System",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}
