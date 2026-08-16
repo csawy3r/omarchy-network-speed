@@ -25,10 +25,18 @@ Panel {
     { down: "•", up: "•" }
   ]
 
-  readonly property var colorChoices: [
-    "", "#e06c75", "#e5c07b", "#98c379", "#56b6c2",
-    "#61afef", "#c678dd", "#abb2bf", "#ffffff"
-  ]
+  property var themeColors: ({})
+  readonly property var colorChoices: Model.themePalette(root.themeColors)
+
+  FileView {
+    id: themeColorsFile
+    path: Quickshell.env("HOME") + "/.local/state/omarchy/current/theme/colors.toml"
+    watchChanges: true
+    printErrors: false
+    onLoaded: root.themeColors = Model.parseThemeColors(text())
+    onFileChanged: reload()
+    onLoadFailed: root.themeColors = ({})
+  }
 
   readonly property string selectedInterface: String(setting("selectedInterface", "auto"))
   readonly property string downloadIcon: String(setting("downloadIcon", "↓"))

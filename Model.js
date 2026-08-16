@@ -14,6 +14,40 @@ function pollScript() {
     + "done\n"
 }
 
+// Parses the small, stable subset of theme/colors.toml keys every Omarchy
+// theme defines (accent, muted, foreground, red, yellow, orange, green,
+// cyan, blue, magenta) into a flat dict. Same regex shape as the shell's
+// own Color.qml loader, so it stays correct if a theme quotes values or
+// adds trailing comments.
+function parseThemeColors(raw) {
+  var keys = ["accent", "muted", "foreground", "red", "yellow", "orange", "green", "cyan", "blue", "magenta"]
+  var out = {}
+  var lines = String(raw || "").split("\n")
+  for (var i = 0; i < lines.length; i++) {
+    var match = lines[i].match(/^\s*([A-Za-z0-9_-]+)\s*=\s*["']?(#[0-9A-Fa-f]{6})/)
+    if (!match) continue
+    if (keys.indexOf(match[1]) !== -1) out[match[1]] = match[2]
+  }
+  return out
+}
+
+// Builds the speed-tier swatch palette from the live theme, falling back to
+// the old fixed One Dark values for any key an unusual theme omits.
+function themePalette(theme) {
+  var t = theme || {}
+  return [
+    "",
+    t.red || "#e06c75",
+    t.yellow || "#e5c07b",
+    t.green || "#98c379",
+    t.cyan || "#56b6c2",
+    t.blue || t.accent || "#61afef",
+    t.magenta || "#c678dd",
+    t.muted || "#abb2bf",
+    t.foreground || "#ffffff"
+  ]
+}
+
 // raw -> { auto: "eth0", ifaces: { eth0: {rx,tx}, ... }, list: [names...] }
 function parseSample(raw) {
   var lines = String(raw || "").split("\n")
