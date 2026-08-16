@@ -40,8 +40,8 @@ omarchy restart shell
 | **Interface picker** | Auto (default route), all interfaces combined, or any specific NIC. |
 | **Icon picker** | Independent icon choices for the download and upload arrows. |
 | **Speed-tier colors** | One shared palette (B/s, KB/s, MB/s) colors the arrow, number, and unit by how fast the current rate is. Swatch choices are read live from your active Omarchy theme's `colors.toml` and update automatically when you switch themes. |
-| **Minimum threshold** | Below a configurable speed, show `- B/s` instead of a noisy near-zero number. |
-| **Fixed column width** | Optional constant width so neighboring bar widgets don't shift as digit count changes. |
+| **Minimum threshold** | Below a configurable speed, show `- B/s` instead of a noisy near-zero number. Set with the up/down arrows (no typing). |
+| **Fixed column width** | Optional constant width so neighboring bar widgets don't shift as digit count changes. Set with the up/down arrows (no typing). |
 | **Top apps** | Popup lists up to 5 of your own processes by current network activity (via `ss -tanpi`), each with live download/upload rate. Unprivileged — only sees sockets owned by the current user. |
 
 ## Settings

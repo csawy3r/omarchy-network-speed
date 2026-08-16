@@ -332,14 +332,24 @@ Panel {
 
         PanelSectionHeader { text: "LAYOUT"; foreground: Color.popups.text }
 
+        Text {
+          Layout.fillWidth: true
+          text: "Speed column width (px, 0 = auto-fit)"
+          color: Qt.darker(Color.popups.text, 1.3)
+          font.family: Style.font.family
+          font.pixelSize: Style.font.bodySmall
+          wrapMode: Text.WordWrap
+        }
+
         NumberField {
-          label: "Speed column width (px, 0 = auto-fit)"
+          label: ""
           value: root.speedWidth
           from: 0
           to: 300
           stepSize: 2
           foreground: Color.popups.text
           accent: Color.accent
+          field.editable: false
           onModified: function(value) { root.setSpeedWidth(value) }
         }
 
@@ -356,14 +366,24 @@ Panel {
           wrapMode: Text.WordWrap
         }
 
+        Text {
+          Layout.fillWidth: true
+          text: "Minimum threshold (B/s)"
+          color: Qt.darker(Color.popups.text, 1.3)
+          font.family: Style.font.family
+          font.pixelSize: Style.font.bodySmall
+          wrapMode: Text.WordWrap
+        }
+
         NumberField {
-          label: "Minimum threshold (B/s)"
+          label: ""
           value: root.minThreshold
           from: 0
           to: 1048576
           stepSize: 64
           foreground: Color.popups.text
           accent: Color.accent
+          field.editable: false
           onModified: function(value) { root.setMinThreshold(value) }
         }
 
