@@ -28,16 +28,6 @@ Panel {
   property var themeColors: ({})
   readonly property var colorChoices: Model.themePalette(root.themeColors)
 
-  FileView {
-    id: themeColorsFile
-    path: Quickshell.env("HOME") + "/.local/state/omarchy/current/theme/colors.toml"
-    watchChanges: true
-    printErrors: false
-    onLoaded: root.themeColors = Model.parseThemeColors(text())
-    onFileChanged: reload()
-    onLoadFailed: root.themeColors = ({})
-  }
-
   readonly property string selectedInterface: String(setting("selectedInterface", "auto"))
   readonly property string downloadIcon: String(setting("downloadIcon", "↓"))
   readonly property string uploadIcon: String(setting("uploadIcon", "↑"))
@@ -96,6 +86,7 @@ Panel {
   function setByteColor(hex) { persistSettings({ byteColor: hex }) }
   function setKiloColor(hex) { persistSettings({ kiloColor: hex }) }
   function setMegaColor(hex) { persistSettings({ megaColor: hex }) }
+
   function setMinThreshold(value) { persistSettings({ minThreshold: Math.max(0, Math.round(Number(value) || 0)) }) }
   function setSpeedWidth(value) { persistSettings({ speedWidth: Math.max(0, Math.round(Number(value) || 0)) }) }
 
@@ -122,8 +113,15 @@ Panel {
     root.networkProcesses = state.list
   }
 
+  function refreshThemeColorsNow() { themeColorsProc.running = true }
+
+  function handleThemeColorsSample(raw) {
+    root.themeColors = Model.parseThemeColors(raw)
+  }
+
   onSelectedInterfaceChanged: throughputPrev = ({})
-  onOpenedChanged: if (opened) refreshProcessesNow()
+  onOpenedChanged: if (opened) { refreshProcessesNow(); refreshThemeColorsNow() }
+  Component.onCompleted: refreshThemeColorsNow()
 
   Timer {
     interval: root.pollIntervalMs
@@ -147,6 +145,16 @@ Panel {
   }
 
   Process {
+    id: themeColorsProc
+    command: ["bash", "-lc", "cat ~/.local/state/omarchy/current/theme/colors.toml 2>/dev/null"]
+    stdout: StdioCollector {
+      id: themeColorsOut
+      waitForEnd: true
+      onStreamFinished: root.handleThemeColorsSample(text)
+    }
+  }
+
+  Process {
     id: pollProc
     command: ["bash", "-lc", Model.pollScript()]
     stdout: StdioCollector {
@@ -163,7 +171,7 @@ Panel {
     owner: root.barIdentity
     open: root.opened
     contentWidth: Style.space(320)
-    contentHeight: Style.space(720)
+    contentHeight: Style.space(620)
 
     ScrollView {
       id: scrollArea
@@ -380,18 +388,19 @@ Panel {
           spacing: Style.spacing.sm
 
           Repeater {
-            model: root.colorChoices
+            model: root.colorChoices.length
             delegate: Rectangle {
-              required property var modelData
+              required property int index
+              readonly property string swatch: root.colorChoices[index]
               width: Style.space(22)
               height: Style.space(22)
               radius: width / 2
-              color: modelData === "" ? "transparent" : modelData
-              border.width: root.byteColor === modelData ? 2 : 1
-              border.color: root.byteColor === modelData ? Color.accent : Qt.darker(Color.popups.text, 1.6)
+              color: swatch === "" ? "transparent" : swatch
+              border.width: root.byteColor === swatch ? 2 : 1
+              border.color: root.byteColor === swatch ? Color.accent : Qt.darker(Color.popups.text, 1.6)
 
               Text {
-                visible: modelData === ""
+                visible: swatch === ""
                 anchors.centerIn: parent
                 text: "∅"
                 color: Color.popups.text
@@ -401,20 +410,10 @@ Panel {
               MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.setByteColor(modelData)
+                onClicked: root.setByteColor(swatch)
               }
             }
           }
-        }
-
-        TextField {
-          id: byteHexField
-          Layout.preferredWidth: Style.space(100)
-          Layout.alignment: Qt.AlignLeft
-          text: root.byteColor
-          placeholderText: "#rrggbb"
-          foreground: Color.popups.text
-          onAccepted: root.setByteColor(text)
         }
 
         Text {
@@ -429,18 +428,19 @@ Panel {
           spacing: Style.spacing.sm
 
           Repeater {
-            model: root.colorChoices
+            model: root.colorChoices.length
             delegate: Rectangle {
-              required property var modelData
+              required property int index
+              readonly property string swatch: root.colorChoices[index]
               width: Style.space(22)
               height: Style.space(22)
               radius: width / 2
-              color: modelData === "" ? "transparent" : modelData
-              border.width: root.kiloColor === modelData ? 2 : 1
-              border.color: root.kiloColor === modelData ? Color.accent : Qt.darker(Color.popups.text, 1.6)
+              color: swatch === "" ? "transparent" : swatch
+              border.width: root.kiloColor === swatch ? 2 : 1
+              border.color: root.kiloColor === swatch ? Color.accent : Qt.darker(Color.popups.text, 1.6)
 
               Text {
-                visible: modelData === ""
+                visible: swatch === ""
                 anchors.centerIn: parent
                 text: "∅"
                 color: Color.popups.text
@@ -450,20 +450,10 @@ Panel {
               MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.setKiloColor(modelData)
+                onClicked: root.setKiloColor(swatch)
               }
             }
           }
-        }
-
-        TextField {
-          id: kiloHexField
-          Layout.preferredWidth: Style.space(100)
-          Layout.alignment: Qt.AlignLeft
-          text: root.kiloColor
-          placeholderText: "#rrggbb"
-          foreground: Color.popups.text
-          onAccepted: root.setKiloColor(text)
         }
 
         Text {
@@ -478,18 +468,19 @@ Panel {
           spacing: Style.spacing.sm
 
           Repeater {
-            model: root.colorChoices
+            model: root.colorChoices.length
             delegate: Rectangle {
-              required property var modelData
+              required property int index
+              readonly property string swatch: root.colorChoices[index]
               width: Style.space(22)
               height: Style.space(22)
               radius: width / 2
-              color: modelData === "" ? "transparent" : modelData
-              border.width: root.megaColor === modelData ? 2 : 1
-              border.color: root.megaColor === modelData ? Color.accent : Qt.darker(Color.popups.text, 1.6)
+              color: swatch === "" ? "transparent" : swatch
+              border.width: root.megaColor === swatch ? 2 : 1
+              border.color: root.megaColor === swatch ? Color.accent : Qt.darker(Color.popups.text, 1.6)
 
               Text {
-                visible: modelData === ""
+                visible: swatch === ""
                 anchors.centerIn: parent
                 text: "∅"
                 color: Color.popups.text
@@ -499,20 +490,10 @@ Panel {
               MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.setMegaColor(modelData)
+                onClicked: root.setMegaColor(swatch)
               }
             }
           }
-        }
-
-        TextField {
-          id: megaHexField
-          Layout.preferredWidth: Style.space(100)
-          Layout.alignment: Qt.AlignLeft
-          text: root.megaColor
-          placeholderText: "#rrggbb"
-          foreground: Color.popups.text
-          onAccepted: root.setMegaColor(text)
         }
       }
     }
